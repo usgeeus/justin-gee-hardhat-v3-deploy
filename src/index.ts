@@ -10,7 +10,7 @@ import { UniswapV3Deployer } from "./deployer/UniswapV3Deployer";
 task("tokamak-uniswap-v3-deploy", "Deploys Uniswap V3 contracts", async (args, hre) => {
   const [actor] = await hre.ethers.getSigners();
   const networkName = hre.network.name;
-  const contracts = await UniswapV3Deployer.deploy(actor);
+  const contracts = await UniswapV3Deployer.deploy(actor, networkName, hre);
   save(networkName, contracts);
   const table = new Table({
     head: ["Contract", "Address"],

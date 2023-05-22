@@ -1,5 +1,6 @@
 import { Signer, Contract, ContractFactory, utils } from "ethers";
 import { linkLibraries } from "../util/linkLibraries";
+import { verify } from "../util/verify";
 
 type ContractJson = { abi: any; bytecode: string };
 const artifacts: { [name: string]: ContractJson } = {
@@ -23,7 +24,7 @@ const artifacts: { [name: string]: ContractJson } = {
 // type IUniswapV3Factory = Contract;
 
 export class UniswapV3Deployer {
-  static async deploy(actor: Signer): Promise<{ [name: string]: Contract }> {
+  static async deploy(actor: Signer, networkName:string, hre :HardhatRuntimeEnvironment): Promise<{ [name: string]: Contract }> {
     const deployer = new UniswapV3Deployer(actor);
     const WETH9Address = '0x4200000000000000000000000000000000000006';
     const factoryV2Address = "0x0000000000000000000000000000000000000000";
@@ -39,7 +40,6 @@ export class UniswapV3Deployer {
       WETH9Address,
       positionDescriptor.address
     );
-    //Quoter, QuoterV2, TickLens,UniswapInterfaceMulticall
     const quoter = await deployer.deployQuoter(factory.address, WETH9Address);
     const quoterV2 = await deployer.deployQuoterV2(factory.address, WETH9Address);
     const tickLens = await deployer.deployTickLens();
@@ -53,6 +53,24 @@ export class UniswapV3Deployer {
     );
     const uniswapV3PoolSwapTest = await deployer.deployUniswapV3PoolSwapTest();
     const multicall = await deployer.deployMulticall();
+    
+    console.log(networkName);
+    if(networkName === "tokamakgoerli"){
+      await verify(factory.address, []);
+      await verify(router.address, [factory.address, WETH9Address]);
+      await verify(nftDescriptorLibrary.address, []);
+      await verify(positionDescriptor.address, [nftDescriptorLibrary.address, WETH9Address]);
+      await verify(positionManager.address, [factory.address, WETH9Address, positionDescriptor.address]);
+      await verify(quoter.address, [factory.address, WETH9Address]);
+      await verify(quoterV2.address, [factory.address, WETH9Address]);
+      await verify(tickLens.address, []);
+      await verify(uniswapInterfaceMulticall.address, []);
+      await verify(bancorConverterRegistry.address, []);
+      await verify(swapRouter02.address, [factoryV2Address, factory.address, positionManager.address, WETH9Address]);
+      await verify(uniswapV3PoolSwapTest.address, []);
+      await verify(multicall.address, []);
+    }
+
   
 
     return {
